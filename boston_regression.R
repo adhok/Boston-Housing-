@@ -1,0 +1,47 @@
+require(tree)
+require(ISLR)
+require(ggplot2)
+house <- read.table('boston_housing.txt',stringsAsFactors=T)
+names(house)[1]='CRIM'
+names(house)[2]='ZN'
+names(house)[3]='INDUS'
+names(house)[4]='CHAS'
+names(house)[5]='NOX'
+names(house)[6]='RM'
+names(house)[7]='AGE'
+names(house)[8]='DIS'
+names(house)[9]='RAD'
+names(house)[10]='TAX'
+names(house)[11]='PTRATIO'
+names(house)[12]='BLACK'
+names(house)[13]='LSTAT'
+names(house)[14]='MEDV'
+attach(house)
+set.seed(2)
+#ggplot(house,aes(x=INDUS,y=MEDV))+geom_point() +stat_density2d(aes(fill=..density..),geom="raster",contour=FALSE,h=c(.5,5))
+noofobs = dim(house)[1]
+train=sample(1:noofobs,0.9*noofobs)
+test=-train
+testdata=house[test,]
+traindata=house[train,]
+test_outcomes=MEDV[test]
+tree_model=tree(MEDV~.,traindata)
+png('boston_tree.png')
+plot(tree_model)
+text(tree_model,pretty=0)
+dev.off()
+tree_pred=predict(tree_model,testdata)
+mean((tree_pred-test_outcomes)^2)
+set.seed(3)
+cv_tree=cv.tree(tree_model,K=5,FUN=prune.tree)
+names(cv_tree)
+png('optimum_boston.png')
+plot(cv_tree$size,cv_tree$dev,type='b')
+dev.off()
+pruned_model=prune.tree(tree_model,best=8)
+png('pruned_boston.png')
+plot(pruned_model)
+text(pruned_model,pretty=0)
+dev.off()
+tree_pred_pruned=predict(pruned_model,testdata)
+mean((tree_pred_pruned-test_outcomes)^2)
